@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<!-- Compiled and minified CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+<!-- Compiled and minified JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
 <style>
 
     .links line {
@@ -18,10 +24,17 @@
     }
 
 </style>
+<pre id="modal" class="modal"></pre>
 <svg height="860" width="1024"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
-    async function go() {
+    document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.modal');
+        M.Modal.init(elems, {});
+    });
+
+    async function go()
+    {
         cases = await fetch('cases.json');
         cases_links = await fetch('cases_links.json');
 
@@ -65,9 +78,14 @@
             .enter().append("g");
 
         node.append("circle")
-            .attr("r", 5)
+            .attr("r", 7)
             .attr("fill", function (d) {
                 return color(d.origin_of_infection);
+            })
+            .on('click', function (d) {
+                const elem = document.getElementById("modal");
+                elem.textContent = JSON.stringify(d, null, 2);
+                M.Modal.getInstance(elem).open();
             })
             .call(d3.drag()
                 .on("start", dragstarted)
@@ -135,6 +153,4 @@
     }
 
     go()
-
-
 </script>

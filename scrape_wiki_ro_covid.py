@@ -7,7 +7,7 @@ import json
 
 url = 'https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Romania'
 
-Case = namedtuple('Case', "id date age sex origin_of_infection detection_location source_of_infection status note")
+Case = namedtuple('Case', "id date age sex origin_of_infection detection_location source_of_infection status notes")
 
 
 def get_cases() -> [Case]:
@@ -44,7 +44,7 @@ def get_cases() -> [Case]:
                         data[header_idx['Detection location'] - 1][1],
                         data[header_idx['Source of infection'] - 1][1],
                         data[header_idx['Status'] - 1][1],
-                        data[header_idx['Note'] - 1][1])
+                        data[header_idx['Notes'] - 1][1])
         cases_data.append(case_row)
     return cases_data
 
@@ -52,7 +52,7 @@ def get_cases() -> [Case]:
 def find_links(cs: [Case]) -> dict:
     links = {}
     for c in cs:
-        possible_link = re.findall(r"#\d+", c.note)
+        possible_link = re.findall(r"#\d+", c.notes)
         links[c.id] = [int(p.lstrip("#")) for p in possible_link]
         # if c.origin_of_infection != "N/A":
         #     links[c.id].append(0)
