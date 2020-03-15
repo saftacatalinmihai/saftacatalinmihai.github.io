@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+
 <!-- Compiled and minified CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 
@@ -25,7 +26,7 @@
 
 </style>
 <pre id="modal" class="modal"></pre>
-<svg height="860" width="1024"></svg>
+<svg height="600" width="860"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -54,7 +55,7 @@
             .force("link", d3.forceLink().id(function (d) {
                 return d.id;
             }))
-            .force("charge", d3.forceManyBody().strength(-10))
+            .force("charge", d3.forceManyBody().strength(-5))
             .force("center", d3.forceCenter(width / 2, height / 2));
 
         graph = {
@@ -78,7 +79,7 @@
             .enter().append("g");
 
         node.append("circle")
-            .attr("r", 7)
+            .attr("r", 8)
             .attr("fill", function (d) {
                 return color(d.origin_of_infection);
             })
@@ -153,4 +154,14 @@
     }
 
     go()
+</script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-47272930-2"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-47272930-2');
 </script>
