@@ -79,12 +79,7 @@
             .data(graph.nodes)
             .enter().append("g");
 
-        node.append("circle")
-            .attr("r", 8)
-            .attr("fill", function (d) {
-                return color(d.origin_of_infection);
-            })
-            .on('click', function (d) {
+        function show_case_data(d) {
                 const elem = document.getElementById("modal");
                 let deepClone = JSON.parse(JSON.stringify(d));
                 delete deepClone['x'];
@@ -96,13 +91,21 @@
                 delete deepClone['index'];
                 elem.textContent = JSON.stringify(deepClone, null, 2);
                 M.Modal.getInstance(elem).open();
+        }
+
+        node.append("circle")
+            .attr("r", 8)
+            .attr("fill", function (d) {
+                return color(d.origin_of_infection);
             })
+            .on('click', show_case_data)
             .call(d3.drag()
                 .on("start", dragstarted)
                 .on("drag", dragged)
                 .on("end", dragended));
 
         node.append("text")
+            .on('click', show_case_data)
             .text(function (d) {
                 return d.id;
             })
