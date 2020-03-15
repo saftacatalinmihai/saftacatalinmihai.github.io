@@ -24,15 +24,23 @@
 
 </style>
 <body>
-<p>Sursa data: <a href="https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Romania">Wikipedia</a></p>
-<p>Culoarea indica tara de origine a infectarii</p>
-<div id="modal" class="modal">
-    <h4>Case data</h4>
-    <div class="modal-content">
-        <pre class="case-data"></pre>
+<div class="container">
+    <div class="row">
+        <div class="col s12">
+            <p>Sursa data: <a href="https://en.wikipedia.org/wiki/2020_coronavirus_pandemic_in_Romania">Wikipedia</a>
+            </p>
+            <p>Culoarea indica tara de origine a infectarii</p>
+            <div id="modal" class="modal">
+                <h4>Case data</h4>
+                <div class="modal-content">
+                    <pre class="case-data"></pre>
+                </div>
+            </div>
+            <svg height="600" width="860"></svg>
+        </div>
     </div>
+
 </div>
-<svg height="600" width="860"></svg>
 </body>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script>
@@ -42,34 +50,29 @@
     });
 
     async function go() {
-        cases = await fetch('cases.json');
-        cases_links = await fetch('cases_links.json');
-
-        // .then(res => res.json())
-        // .then((out) => {
-        //     console.log('Checkout this JSON! ', out);
-        // })
-        // .catch(err => { throw err });
+        const cases = await fetch('cases.json');
+        const cases_links = await fetch('cases_links.json');
 
         var svg = d3.select("svg"),
             width = +svg.attr("width"),
             height = +svg.attr("height");
 
-        var color = d3.scaleOrdinal(d3.schemeCategory20);
-
-        var simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(function (d) {
-                return d.id;
-            }))
-            .force("charge", d3.forceManyBody().strength(-5))
-            .force("center", d3.forceCenter(width / 2, height / 2));
-
-        graph = {
+        const graph = {
             "nodes": await cases.json(),
             "links": await cases_links.json()
         };
 
-        var link = svg.append("g")
+        const simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(d => d.id))
+            .force("collide",d3.forceCollide(d => d.r + 8).iterations(16) )
+            .force("charge", d3.forceManyBody())
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("y", d3.forceY(0).strength(0.04))
+            .force("x", d3.forceX(0).strength(0.04));
+
+        const color = d3.scaleOrdinal(d3.schemeCategory20);
+
+        const link = svg.append("g")
             .attr("class", "links")
             .selectAll("line")
             .data(graph.links)
@@ -78,53 +81,51 @@
                 return Math.sqrt(d.value);
             });
 
-        var node = svg.append("g")
+        function get_case_string(d) {
+            let deepClone = JSON.parse(JSON.stringify(d));
+            delete deepClone['x'];
+            delete deepClone['y'];
+            delete deepClone['vx'];
+            delete deepClone['vy'];
+            delete deepClone['fx'];
+            delete deepClone['fy'];
+            delete deepClone['index'];
+            let pretty_case = "";
+            for (let [key, value] of Object.entries(deepClone)) {
+                pretty_case = pretty_case + `${key}: ${value}` + "\n";
+            }
+            return pretty_case
+        }
+        function show_case_data(d) {
+            const pretty_case = get_case_string(d);
+            const elem = document.getElementById("modal");
+            elem.children[1].children[0].textContent = pretty_case;
+            M.Modal.getInstance(elem).open();
+        }
+
+        const node = svg.append("g")
             .attr("class", "nodes")
             .selectAll("g")
             .data(graph.nodes)
-            .enter().append("g");
-
-        function show_case_data(d) {
-                const elem = document.getElementById("modal");
-                let deepClone = JSON.parse(JSON.stringify(d));
-                delete deepClone['x'];
-                delete deepClone['y'];
-                delete deepClone['vx'];
-                delete deepClone['vy'];
-                delete deepClone['fx'];
-                delete deepClone['fy'];
-                delete deepClone['index'];
-                let pretty_case = "";
-                for (let [key, value] of Object.entries(deepClone)) {
-                    pretty_case = pretty_case + `${key}: ${value}` + "\n";
-                }
-                elem.children[1].children[0].textContent = pretty_case;
-                M.Modal.getInstance(elem).open();
-        }
-
-        node.append("circle")
-            .attr("r", 8)
-            .attr("fill", function (d) {
-                return color(d.origin_of_infection);
-            })
+            .enter().append("g")
             .on('click', show_case_data)
             .call(d3.drag()
                 .on("start", dragstarted)
                 .on("drag", dragged)
                 .on("end", dragended));
 
+        node.append("circle")
+            .attr("r", 8)
+            .attr("fill", d => color(d.origin_of_infection));
+
         node.append("text")
             .on('click', show_case_data)
-            .text(function (d) {
-                return d.id;
-            })
+            .text(d => d.id)
             .attr('x', 10)
             .attr('y', 5);
 
         node.append("title")
-            .text(function (d) {
-                return JSON.stringify(d, null, 2);
-            });
+            .text(get_case_string);
 
         simulation
             .nodes(graph.nodes)
@@ -135,26 +136,17 @@
 
         function ticked() {
             link
-                .attr("x1", function (d) {
-                    return d.source.x;
-                })
-                .attr("y1", function (d) {
-                    return d.source.y;
-                })
-                .attr("x2", function (d) {
-                    return d.target.x;
-                })
-                .attr("y2", function (d) {
-                    return d.target.y;
-                });
-
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
             node
+                // .attr("cx", function(d) { return d.x; })
+                // .attr("cy", function(d) { return d.y; });
                 .attr("transform", function (d) {
                     return "translate(" + d.x + "," + d.y + ")";
                 })
         }
-
-        // });
 
         function dragstarted(d) {
             if (!d3.event.active) simulation.alphaTarget(0.3).restart();
@@ -172,6 +164,7 @@
             d.fx = null;
             d.fy = null;
         }
+        return svg.node()
     }
 
     go()
