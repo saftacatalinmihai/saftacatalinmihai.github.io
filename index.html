@@ -85,7 +85,15 @@
             })
             .on('click', function (d) {
                 const elem = document.getElementById("modal");
-                elem.textContent = JSON.stringify(d, null, 2);
+                let deepClone = JSON.parse(JSON.stringify(d));
+                delete deepClone['x'];
+                delete deepClone['y'];
+                delete deepClone['vx'];
+                delete deepClone['vy'];
+                delete deepClone['fx'];
+                delete deepClone['fy'];
+                delete deepClone['index'];
+                elem.textContent = JSON.stringify(deepClone, null, 2);
                 M.Modal.getInstance(elem).open();
             })
             .call(d3.drag()
